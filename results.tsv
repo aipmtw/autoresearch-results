@@ -1,0 +1,4 @@
+commit	val_bpb	memory_gb	status	description
+5f30175	1.221079	3.0	keep	baseline: depth=4 batch=8 total_batch=2^15
+1110752	1.183312	6.1	keep	depth=8 (model_dim=512 4heads 50M params)
+8d8b95b	1.919503	20.8	discard	depth=12 batch=16 (135M params too slow: only 65 steps)
