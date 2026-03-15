@@ -1,0 +1,12 @@
+commit	val_bpb	memory_gb	status	description
+5f30175	1.221079	3.0	keep	baseline: depth=4 batch=8 total_batch=2^15
+1110752	1.183312	6.1	keep	depth=8 (model_dim=512 4heads 50M params)
+8d8b95b	1.919503	20.8	discard	depth=12 batch=16 (135M params too slow: only 65 steps)
+8b13aa1	1.179693	11.4	keep	depth=8 batch=16 (no grad accum; 1046 steps)
+01e084e	1.188964	11.4	discard	Muon LR 0.06 (too high; worse than 0.04)
+e310377	1.184004	11.4	discard	5% warmup ratio (no improvement)
+dccaae4	1.187984	11.6	discard	64K total batch (too few steps: 532)
+90477ba	1.186608	11.4	discard	warmdown 0.3 (worse than 0.5)
+8e6ee4e	1.192004	13.2	discard	depth=10 dim=512 (60.8M; 848 steps too few)
+aa1cc9a	1.206243	11.2	discard	remove value embeddings (VE essential for quality)
+e100834	1.174887	11.4	keep	disable weight decay (0.2 -> 0.0)
