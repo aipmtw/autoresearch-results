@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoResearch Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+  <a href="https://github.com/aipmtw/autoresearch-results/issues" target="_blank" rel="noopener noreferrer" style="position:fixed;top:12px;right:12px;z-index:50;background:rgba(245,158,11,0.8);color:white;padding:4px 8px;border-radius:8px;font-size:12px;font-weight:500;text-decoration:none;">我要下達需求</a>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TSV_URL = 'https://raw.githubusercontent.com/aipmtw/autoresearch-results/autoresearch/mar15/results.tsv';
+    const ROWS_PER_PAGE = 100;
+
+    function App() {
+      const [headers, setHeaders] = useState([]);
+      const [rows, setRows] = useState([]);
+      const [page, setPage] = useState(1);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        fetch(TSV_URL)
+          .then(res => res.text())
+          .then(text => {
+            const lines = text.trim().split('\n').filter(l => l.trim());
+            if (lines.length === 0) { setError('No data'); return; }
+            setHeaders(lines[0].split('\t'));
+            setRows(lines.slice(1).map(l => l.split('\t')));
+            setLoading(false);
+          })
+          .catch(e => { setError(e.message); setLoading(false); });
+      }, []);
+
+      const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
+      const start = (page - 1) * ROWS_PER_PAGE;
+      const pageRows = rows.slice(start, start + ROWS_PER_PAGE);
+
+      if (loading) return <div className="flex justify-center items-center h-screen"><p className="text-xl text-gray-400">Loading...</p></div>;
+      if (error) return <div className="flex justify-center items-center h-screen"><p className="text-xl text-red-400">Error: {error}</p></div>;
+
+      const statusColor = (val) => {
+        if (val === 'keep') return 'text-emerald-400';
+        if (val === 'discard') return 'text-red-400';
+        return '';
+      };
+
+      return (
+        <div className="max-w-6xl mx-auto px-6 py-10">
+          <h1 className="text-3xl font-bold mb-2">AutoResearch Results</h1>
+          <p className="text-gray-400 mb-6">{rows.length} rows — Page {page} of {totalPages}</p>
+
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/10">
+                  {headers.map((h, i) => (
+                    <th key={i} className="px-4 py-3 text-left font-semibold text-gray-300 uppercase tracking-wider text-xs">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map((row, ri) => (
+                  <tr key={ri} className="border-b border-white/5 hover:bg-white/5 transition">
+                    {row.map((cell, ci) => (
+                      <td key={ci} className={`px-4 py-3 font-mono text-sm ${headers[ci] === 'status' ? statusColor(cell) : ''} ${headers[ci] === 'commit' ? 'text-indigo-300' : ''}`}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm">
+                Previous
+              </button>
+              {Array.from({length: Math.min(totalPages, 10)}, (_, i) => i + 1).map(p => (
+                <button key={p} onClick={() => setPage(p)}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition ${p === page ? 'bg-indigo-500 text-white' : 'bg-white/10 hover:bg-white/20'}`}>
+                  {p}
+                </button>
+              ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm">
+                Next
+              </button>
+            </div>
+          )}
+
+          <p className="text-center text-gray-600 text-xs mt-8">
+            Source: <a href="https://github.com/aipmtw/autoresearch-results" className="text-indigo-400 hover:underline" target="_blank">aipmtw/autoresearch-results</a>
+          </p>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
